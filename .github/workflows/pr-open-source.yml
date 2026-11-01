@@ -1,0 +1,51 @@
+name: PR Open - Source
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-open-source-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-source:
+    name: e2e-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # The pnpm version comes from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: ./build.sh install
+      - run: ./build.sh compile
+      - run: ./build.sh test
+      - run: ./build.sh build
+
+      - name: Install Chromium
+        run: pnpm --filter ai-ci-reference-e2e exec playwright install --with-deps chromium
+
+      - name: Playwright smoke suite
+        run: pnpm --filter ai-ci-reference-e2e test:smoke
+        env:
+          CI: "true"
+
+      - name: Upload Playwright diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-diagnostics
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
