@@ -25,6 +25,39 @@ flowchart LR
 
 The workflow is [.github/workflows/pr-open-source.yml](.github/workflows/pr-open-source.yml), job name `e2e-source`. Make that job a required status check in branch protection if it should block merges.
 
+## Setup requirements (greenfield checklist)
+
+What a new project needs before this flow can work:
+
+**Repository and hosting**
+- A GitHub repo whose default branch is `main` (the workflow triggers on PRs to `main`) with GitHub Actions enabled.
+- A branch ruleset on `main` that requires the `e2e-source` check (Github web UI: Settings > Rules > Rulesets > New ruleset > New Branch Ruleset), with an empty bypass list so admins cannot skip it. The check name appears only after the first workflow run.
+- A way to push: a browser sign-in through Git Credential Manager, or a token with Contents and Workflows write access.
+
+**Tooling**
+- Node 22+ (24 recommended) and pnpm. Pin the pnpm version in the root `package.json` (`packageManager`), because the workflow reads it from there.
+- Git Bash or WSL on Windows, to run `build.sh`. No Docker, and no secrets.
+
+**Repository layout**
+- A pnpm workspace: `pnpm-workspace.yaml` listing the packages (`apps/*`, `e2e`), one committed `pnpm-lock.yaml`, and a `package.json` per package.
+- `apps/web` (React and Vite) and `apps/api` (Express and SQLite). Each has a `compile` script (type check) and the build scripts that write `dist/`.
+- A single task entry point, `build.sh`, committed with its executable bit and LF line endings, so local runs and CI use the same commands.
+- `.gitignore` (`node_modules`, `dist`, `data`, `test-results`, `playwright-report`, `.env`) and `.gitattributes` (LF endings).
+
+**What the app must provide for testing**
+- A `/health` endpoint, so a test server can be waited on.
+- Seed data that is the same on every start.
+- A test-only reset endpoint that is off unless an environment flag is set.
+
+**Tests**
+- API unit tests: Mocha with Chai, run through `tsx` so no build is needed.
+- E2E tests: `@playwright/test` in `e2e/`, with `ui` and `api` projects, `@smoke` and `@regression` tags, HTML and JUnit reporters, and traces kept on failure.
+- A Playwright fixture that starts one server per worker on its own port with an in-memory database, and resets the data before each test.
+
+**CI workflow**
+- `.github/workflows/pr-open-source.yml`: trigger on `pull_request` to `main`, read-only `permissions`, and `concurrency` so a new push cancels the old run.
+- Steps in order: checkout, pnpm, Node with the pnpm cache, install, compile, Mocha, build, Chromium, smoke tests, upload the report.
+
 ## Run it locally
 
 Needs Node 22+ (24 recommended), pnpm, and Git Bash or WSL on Windows. No Docker is needed.
