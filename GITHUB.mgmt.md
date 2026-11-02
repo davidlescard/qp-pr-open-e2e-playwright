@@ -114,7 +114,7 @@ Create it only after the workflow has run once, because the **Add checks** searc
 3. **Enforcement status:** **Active**. "Evaluate" only logs and blocks nothing, and "Disabled" does nothing.
 4. **Bypass list:** leave it empty. Nobody listed means admins cannot skip the rules.
 5. **Target branches:** **Add target**, then **Include default branch** (or `main` by pattern).
-6. **Rules:** tick **Require status checks to pass**, click **Add checks**, and pick the check for the project (`e2e-container`, `e2e-source`, or `e2e-smoke` and `docker-image`).
+6. **Rules:** tick **Require status checks to pass**, click **Add checks**, and pick the check for the project, correponding to "jobs" within the workflow yml files (i.e. `e2e-container`, `e2e-source`, or `e2e-smoke` and `docker-image`).
 7. Optionally tick **Require a pull request before merging**, **Block force pushes**, and **Require branches to be up to date before merging** (the last one causes re-runs after other merges). Then **Create**.
 
 Gotchas seen so far:
