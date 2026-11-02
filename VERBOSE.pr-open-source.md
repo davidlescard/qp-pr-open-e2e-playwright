@@ -20,11 +20,11 @@ sequenceDiagram
     WF->>SH: install
     SH->>PN: pnpm install --frozen-lockfile
     WF->>SH: compile
-    SH->>PN: tsc --noEmit in api, web, e2e
+    SH->>PN: pnpm run compile, which runs pnpm -r --if-present compile (tsc --noEmit in api, web, e2e)
     WF->>SH: test
-    SH->>PN: mocha (16 tests)
+    SH->>PN: pnpm test (runs mocha, 16 tests)
     WF->>SH: build
-    SH->>PN: vite build, then tsc to dist
+    SH->>PN: pnpm run build (web: tsc + vite build, then api: tsc to dist)
     WF->>PW: install Chromium, run smoke tests
     PW->>APP: spawn node server.js (port 3100+, in-memory DB)
     loop every 200 ms, up to 15 s
